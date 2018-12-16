@@ -10,14 +10,21 @@ class ColorLabeler:
 		# name as the key and the RGB tuple as the value
 		colors = OrderedDict({
 			"red": (255, 0, 0),
+			"red": (128, 0, 0),
 			"green": (0, 255, 0),
+			"green": (0, 128, 0),
 			"blue": (0, 0, 255),
-			#"violet": (148, 0, 211),
-			#"indigo": (75, 0, 130),
+			"blue": (0, 0, 128),
+			"blue": (0, 255, 255),
+			"blue": (0, 128, 128),
+			"purple": (255, 0, 255),
+			"purple": (128, 0, 128),
+			"indigo": (75, 0, 130),
 			"yellow": (255, 255, 0),
+			"orange": (255, 127, 0),
+			"white": (255, 255, 255),
+			"gray": (128, 128, 128),
 			"black": (0, 0, 0),
-			"white": (255, 255, 255)
-			#"orange": (255, 127, 0)
 			})
 
 		# allocate memory for the L*a*b* image, then initialize
@@ -42,9 +49,9 @@ class ColorLabeler:
 		mask = np.zeros(image.shape[:2], dtype="uint8")
 		cv2.drawContours(mask, [c], -1, 255, -1)
 		mask = cv2.erode(mask, None, iterations=2)
+		cv2.imshow("mask", mask)
 		mean = cv2.mean(image, mask=mask)[:3]
-		# mean = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
-		# mean = cv2.mean(mean)
+		print(mean)
 
 		# initialize the minimum distance found thus far
 		minDist = (np.inf, None)
