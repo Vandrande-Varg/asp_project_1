@@ -23,6 +23,7 @@ layerNames = ["feature_fusion/Conv_7/Sigmoid", "feature_fusion/concat_3"]
 confidence = 0.5
 padding = 0.05
 engine = pyttsx.init()
+engine.setProperty('rate',180)
 
 # load the known faces and embeddings
 print("[INFO] loading encodings...")
@@ -39,8 +40,8 @@ engine.runAndWait()
 # initialize the video stream and pointer to output video file, then
 # allow the camera sensor to warm up
 print("[INFO] starting video stream...")
-# vs = VideoStream(usePiCamera=True).start()
-vs = VideoStream(src=1).start()
+vs = VideoStream(usePiCamera=True).start()
+#vs = VideoStream(src=1).start()
 # camera = cv2.VideoCapture(1)
 engine.say("starting video stream")
 engine.runAndWait()
@@ -112,7 +113,7 @@ try:
 
 		# grab the frame from the threaded video stream
 		frame = vs.read()
-		cv2.imshow("Frame", frame)
+		#cv2.imshow("Frame", frame)
 
 		if G.input(17):
 
@@ -129,18 +130,19 @@ try:
 
 					if mode == 1:
 						mode = 2
+						print("Colour Recognition Mode")
 						engine.say("Colour Recognition Mode")
 						engine.runAndWait()
 
 					elif mode == 2:
 						mode = 1
+						print("Face Recognition Mode")
 						engine.say("Face Recognition Mode")
 						engine.runAndWait()
 
 				else:
 
 					if mode == 1:
-						# elif key == "t":
 
 						print("Picture Taken")
 
