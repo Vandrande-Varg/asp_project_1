@@ -1,4 +1,5 @@
 # import the necessary packages
+import RPi.GPIO as G
 from imutils.video import VideoStream
 import face_recognition
 import imutils
@@ -11,6 +12,10 @@ import numpy as np
 import pytesseract
 import webcolors
 
+
+G.setmode(G.BCM)
+G.setup(17, G.IN)
+mode = 1
 encoding_file = "encodings_2.pickle"
 cascade_file = "haarcascade_frontalface_default.xml"
 text_detector = "frozen_east_text_detection.pb"
@@ -97,7 +102,7 @@ def decode_predictions(scores, geometry):
 			confidences.append(scoresData[x])
 
 	# return a tuple of the bounding boxes and associated confidences
-	return (rects, confidences)
+	return rects, confidences
 
 
 
@@ -109,160 +114,179 @@ try:
 		frame = vs.read()
 		cv2.imshow("Frame", frame)
 
-		key = cv2.waitKey(1) & 0xFF
-		# key = input("t or q")
-		if key == ord("q"):
-			# if key == "q":
-			break
-		elif key == ord("p"):
-			# elif key == "t":
+		if G.input(17):
 
-			print("Picture Taken")
+			time.sleep(0.08)
 
-			frame = imutils.resize(frame, width=500)
-			gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-			rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+			if G.input(17):
+				start_time = time.time()
 
-			# detect faces in the grayscale frame
-			rects = detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30),
-											  flags=cv2.CASCADE_SCALE_IMAGE)
+				while G.input(17):
+					continue
 
-			# OpenCV returns bounding box coordinates in (x, y, w, h) order
-			# but we need them in (top, right, bottom, left) order, so we
-			# need to do a bit of reordering
-			boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
+				buttonTime = time.time() - start_time
+				if buttonTime > 1:
 
-			encodings = face_recognition.face_encodings(rgb, boxes)
-			names = []
+					if mode == 1:
+						mode = 2
+						engine.say("Colour Recognition Mode")
+						engine.runAndWait()
 
-			for encoding in encodings:
+					elif mode == 2:
+						mode = 1
+						engine.say("Face Recognition Mode")
+						engine.runAndWait()
 
-				# attempt to match each face in the input image to our known encodings
-				matches = face_recognition.compare_faces(data["encodings"], encoding, tolerance=0.4)
-				name = "Unknown"
+				else:
 
-				# check to see if we have found a match
-				if True in matches:
+					if mode == 1:
+						# elif key == "t":
 
-					# find the indexes of all matched faces
-					matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+						print("Picture Taken")
 
-					# initialize dictionary to count face matches
-					counts = {}
+						frame = imutils.resize(frame, width=500)
+						gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+						rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-					# loop over the matched indexes and maintain a count for each recognized face face
-					for i in matchedIdxs:
-						name = data["names"][i]
-						counts[name] = counts.get(name, 0) + 1
+						# detect faces in the grayscale frame
+						rects = detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30),
+														  flags=cv2.CASCADE_SCALE_IMAGE)
 
-					# determine the recognized face with the largest number of votes
-					name = max(counts, key=counts.get)
+						# OpenCV returns bounding box coordinates in (x, y, w, h) order
+						# but we need them in (top, right, bottom, left) order, so we
+						# need to do a bit of reordering
+						boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
 
-				# update the list of names
-				print(name)
-				engine.say(name.replace("_", " "))
-				engine.runAndWait()
-				names.append(name)
+						encodings = face_recognition.face_encodings(rgb, boxes)
+						names = []
 
-		# elif key == "c":
-		elif key == ord("c"):
+						for encoding in encodings:
 
-			frame = imutils.resize(frame, width=500)
-			image_height = frame.shape[0]  # get image height
-			image_width = frame.shape[1]  # get image width
+							# attempt to match each face in the input image to our known encodings
+							matches = face_recognition.compare_faces(data["encodings"], encoding, tolerance=0.4)
+							name = "Unknown"
 
-			ymid = int(image_height / 2)
-			xmid = int(image_width / 2)
+							# check to see if we have found a match
+							if True in matches:
 
-			requested_colour = frame[ymid, xmid, [2,1,0]]
-			print(requested_colour)
+								# find the indexes of all matched faces
+								matchedIdxs = [i for (i, b) in enumerate(matches) if b]
 
-			min_colours = {}
+								# initialize dictionary to count face matches
+								counts = {}
 
-			for key, name in webcolors.css3_hex_to_names.items():
-				r_c, g_c, b_c = webcolors.hex_to_rgb(key)
-				rd = (r_c - requested_colour[0]) ** 2
-				gd = (g_c - requested_colour[1]) ** 2
-				bd = (b_c - requested_colour[2]) ** 2
-				min_colours[(rd + gd + bd)] = name
+								# loop over the matched indexes and maintain a count for each recognized face face
+								for i in matchedIdxs:
+									name = data["names"][i]
+									counts[name] = counts.get(name, 0) + 1
 
-			colour_name = min_colours[min(min_colours.keys())]
+								# determine the recognized face with the largest number of votes
+								name = max(counts, key=counts.get)
 
-			print(colour_name)
-			engine.say(colour_name)
-			engine.runAndWait()
+							# update the list of names
+							print(name)
+							engine.say(name.replace("_", " "))
+							engine.runAndWait()
+							names.append(name)
 
-		elif key == ord("t"):
+					# elif key == "c":
+					elif mode == 2:
 
-			image = frame
-			orig = image.copy()
-			(origH, origW) = image.shape[:2]
+						frame = imutils.resize(frame, width=500)
+						image_height = frame.shape[0]  # get image height
+						image_width = frame.shape[1]  # get image width
 
-			# set the new width and height and then determine the ratio in change
-			# for both the width and height
-			(newW, newH) = (320, 320)
-			rW = origW / float(newW)
-			rH = origH / float(newH)
+						ymid = int(image_height / 2)
+						xmid = int(image_width / 2)
 
-			# resize the image and grab the new image dimensions
-			image = cv2.resize(image, (newW, newH))
-			(H, W) = image.shape[:2]
+						requested_colour = frame[ymid, xmid, [2,1,0]]
+						print(requested_colour)
 
-			# construct a blob from the image and then perform a forward pass of
-			# the model to obtain the two output layer sets
-			blob = cv2.dnn.blobFromImage(image, 1.0, (W, H),
-										 (123.68, 116.78, 103.94), swapRB=True, crop=False)
-			net.setInput(blob)
-			(scores, geometry) = net.forward(layerNames)
+						min_colours = {}
 
-			# decode the predictions, then  apply non-maxima suppression to
-			# suppress weak, overlapping bounding boxes
-			(rects, confidences) = decode_predictions(scores, geometry)
-			boxes = non_max_suppression(np.array(rects), probs=confidences)
+						for key, name in webcolors.css3_hex_to_names.items():
+							r_c, g_c, b_c = webcolors.hex_to_rgb(key)
+							rd = (r_c - requested_colour[0]) ** 2
+							gd = (g_c - requested_colour[1]) ** 2
+							bd = (b_c - requested_colour[2]) ** 2
+							min_colours[(rd + gd + bd)] = name
 
-			# initialize the list of results
-			results = []
+						colour_name = min_colours[min(min_colours.keys())]
 
-			# loop over the bounding boxes
-			for (startX, startY, endX, endY) in boxes:
+						print(colour_name)
+						engine.say(colour_name)
+						engine.runAndWait()
 
-				# scale the bounding box coordinates based on ratios
-				startX = int(startX * rW)
-				startY = int(startY * rH)
-				endX = int(endX * rW)
-				endY = int(endY * rH)
+					elif mode == 3:
 
-				# apply padding
-				dX = int((endX - startX) * padding)
-				dY = int((endY - startY) * padding)
+						image = frame
+						orig = image.copy()
+						(origH, origW) = image.shape[:2]
 
-				# apply padding to each side of the bounding box, respectively
-				startX = max(0, startX - dX)
-				startY = max(0, startY - dY)
-				endX = min(origW, endX + (dX * 2))
-				endY = min(origH, endY + (dY * 2))
+						# set the new width and height and then determine the ratio in change
+						# for both the width and height
+						(newW, newH) = (320, 320)
+						rW = origW / float(newW)
+						rH = origH / float(newH)
 
-				# extract the actual padded ROI
-				roi = orig[startY:endY, startX:endX]
+						# resize the image and grab the new image dimensions
+						image = cv2.resize(image, (newW, newH))
+						(H, W) = image.shape[:2]
 
-				# tesseract config
-				config = ("-l eng --oem 1 --psm 7")
-				text = pytesseract.image_to_string(roi, config=config)
+						# construct a blob from the image and then perform a forward pass of
+						# the model to obtain the two output layer sets
+						blob = cv2.dnn.blobFromImage(image, 1.0, (W, H),
+													 (123.68, 116.78, 103.94), swapRB=True, crop=False)
+						net.setInput(blob)
+						(scores, geometry) = net.forward(layerNames)
 
-				# add the bounding box coordinates and OCR'd text to the list
-				# of results
-				results.append(((startX, startY, endX, endY), text))
+						# decode the predictions, then  apply non-maxima suppression to
+						# suppress weak, overlapping bounding boxes
+						(rects, confidences) = decode_predictions(scores, geometry)
+						boxes = non_max_suppression(np.array(rects), probs=confidences)
 
-			# sort the results bounding box coordinates from top to bottom
-			results = sorted(results, key=lambda r:r[0][1])
+						# initialize the list of results
+						results = []
 
-			for ((startX, startY, endX, endY), text) in results:
-				print(text)
-				engine.say(text)
-				engine.runAndWait()
+						# loop over the bounding boxes
+						for (startX, startY, endX, endY) in boxes:
 
+							# scale the bounding box coordinates based on ratios
+							startX = int(startX * rW)
+							startY = int(startY * rH)
+							endX = int(endX * rW)
+							endY = int(endY * rH)
 
-# do a bit of cleanup
+							# apply padding
+							dX = int((endX - startX) * padding)
+							dY = int((endY - startY) * padding)
+
+							# apply padding to each side of the bounding box, respectively
+							startX = max(0, startX - dX)
+							startY = max(0, startY - dY)
+							endX = min(origW, endX + (dX * 2))
+							endY = min(origH, endY + (dY * 2))
+
+							# extract the actual padded ROI
+							roi = orig[startY:endY, startX:endX]
+
+							# tesseract config
+							config = ("-l eng --oem 1 --psm 7")
+							text = pytesseract.image_to_string(roi, config=config)
+
+							# add the bounding box coordinates and OCR'd text to the list
+							# of results
+							results.append(((startX, startY, endX, endY), text))
+
+						# sort the results bounding box coordinates from top to bottom
+						results = sorted(results, key=lambda r:r[0][1])
+
+						for ((startX, startY, endX, endY), text) in results:
+							print(text)
+							engine.say(text)
+							engine.runAndWait()
+
+	# do a bit of cleanup
 	cv2.destroyAllWindows()
 	vs.stop()
 	exit()
