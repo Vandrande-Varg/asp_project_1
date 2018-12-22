@@ -23,6 +23,7 @@ layerNames = ["feature_fusion/Conv_7/Sigmoid", "feature_fusion/concat_3"]
 confidence = 0.5
 padding = 0.05
 engine = pyttsx.init()
+#set tts wpm
 engine.setProperty('rate',180)
 
 # load the known faces and embeddings
