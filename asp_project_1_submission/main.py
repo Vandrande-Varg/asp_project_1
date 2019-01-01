@@ -84,20 +84,22 @@ try:
 						rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
 						# detect faces in the grayscale frame
-						rects = detector.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30),
-														  flags=cv2.CASCADE_SCALE_IMAGE)
+						rects = detector.detectMultiScale\
+							(gray, scaleFactor=1.1, minNeighbors=5,
+							 minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
 
 						# reorder and get second rectangle vertex
 						boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
 
 						# get encodings from detected faces
 						encodings = face_recognition.face_encodings(rgb, boxes)
-						
+
 						# loop over encodings of detected faces
 						for encoding in encodings:
 
 							# attempt to match encoding of detected face to known encodings
-							matches = face_recognition.compare_faces(data["encodings"], encoding, tolerance=0.4)
+							matches = face_recognition.compare_faces \
+								(data["encodings"], encoding, tolerance=0.4)
 							name = "Unknown"
 
 							# check for matches
@@ -136,7 +138,8 @@ try:
 
 						min_colours = {}
 
-						# get euclidian distance between pixel RGB values and values in the RGB space 
+						# get euclidean distance between pixel RGB values
+						# and values in the webcolor's RGB space
 						for key, name in webcolors.css3_hex_to_names.items():
 							r_c, g_c, b_c = webcolors.hex_to_rgb(key)
 							rd = (r_c - requested_colour[0]) ** 2

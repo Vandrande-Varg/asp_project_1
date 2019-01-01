@@ -4,8 +4,10 @@ import pickle
 import cv2
 import os
 
+encoding_file = "encodings.pickle"
+
 # get paths for image dataset
-print("[INFO] quantifying faces...")
+print("quantifying faces")
 imagePaths = list(paths.list_images("dataset"))
 
 # initialize lists for encodings and names
@@ -36,6 +38,6 @@ for (i, imagePath) in enumerate(imagePaths):
 # write the facial encodings + names to pickle file
 print("serializing encodings")
 data = {"encodings": knownEncodings, "names": knownNames}
-f = open("encodings", "wb")
+f = open(encoding_file, "wb")
 f.write(pickle.dumps(data))
 f.close()
