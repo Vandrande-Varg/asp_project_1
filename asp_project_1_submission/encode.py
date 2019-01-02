@@ -28,7 +28,7 @@ for (i, imagePath) in enumerate(imagePaths):
 	boxes = face_recognition.face_locations(rgb, model="hog")
 
 	# get facial encodings
-	encodings = face_recognition.face_encodings(rgb, boxes, num_jitters=100)
+	encodings = face_recognition.face_encodings(rgb, boxes)
 
 	# add encodings found to list with respective names
 	for encoding in encodings:
