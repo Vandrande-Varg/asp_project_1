@@ -35,9 +35,6 @@ engine.runAndWait()
 try:
 	while True:
 
-		# get frame from video stream
-		frame = vs.read()
-
 		# poll for button press with debouncing
 		if G.input(17):
 
@@ -70,6 +67,9 @@ try:
 				
 				# else run the current mode
 				else:
+					# get frame from video stream
+					frame = vs.read()
+					
 					# resize image for processing
 					frame = imutils.resize(frame, width=500)
 
@@ -93,6 +93,7 @@ try:
 
 						# get encodings from detected faces
 						encodings = face_recognition.face_encodings(rgb, boxes)
+						names = []
 
 						# loop over encodings of detected faces
 						for encoding in encodings:
@@ -120,8 +121,21 @@ try:
 
 							# say out name
 							print(name)
+							names.append(name)
 							engine.say(name.replace("_", " "))
 							engine.runAndWait()
+							
+						#for ((top, right, bottom, left), name) in zip(boxes, names):
+							# draw the predicted face name on the image
+							#cv2.rectangle(frame, (left, top), (right, bottom),
+								#(0, 255, 0), 2)
+							#y = top - 15 if top - 15 > 15 else top + 15
+							#cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
+								#0.75, (0, 255, 0), 2)
+
+						# display the image to our screen
+						#cv2.imshow("Frame", frame)
+						#key = cv2.waitKey()
 
 					elif mode == 2:
 
