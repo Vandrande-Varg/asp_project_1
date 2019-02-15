@@ -19,13 +19,13 @@ def get_closest_colour(requested_colour):
     min_colours = {}
 
     # get euclidean distance between pixel RGB values
-    # and values in the webcolor's RGB space
-    for key, name in webcolors.css3_hex_to_names.items():
+    # and values in the webcolor RGB space
+    for key, wc_name in webcolors.css3_hex_to_names.items():
         r_c, g_c, b_c = webcolors.hex_to_rgb(key)
         rd = (r_c - requested_colour[0]) ** 2
         gd = (g_c - requested_colour[1]) ** 2
         bd = (b_c - requested_colour[2]) ** 2
-        min_colours[(rd + gd + bd)] = name
+        min_colours[(rd + gd + bd)] = wc_name
 
     # get name of color with the smallest distance
     colour_name = min_colours[min(min_colours.keys())]
@@ -78,7 +78,7 @@ try:
                 button_time = time.time() - start_time
 
                 # switch modes if button held time is more than 1 sec
-                if button_time > 1:
+                if 1 < button_time < 3:
 
                     if mode == 1:
                         mode = 2
@@ -89,6 +89,10 @@ try:
                         mode = 1
                         print("Face Recognition Mode")
                         text_to_speech("Face Recognition Mode")
+
+                # reread encodings file if button held time is more than 3 sec
+                elif button_time > 3:
+                    data = get_reloaded_encodings()
 
                 # else run the current mode
                 else:
