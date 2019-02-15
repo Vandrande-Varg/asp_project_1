@@ -9,6 +9,35 @@ import pyttsx3 as pyttsx
 import webcolors
 
 
+def text_to_speech(message):
+    engine.say(message)
+    engine.runAndWait()
+
+
+def get_closest_colour(requested_colour):
+    # initialise min colours list
+    min_colours = {}
+
+    # get euclidean distance between pixel RGB values
+    # and values in the webcolor's RGB space
+    for key, name in webcolors.css3_hex_to_names.items():
+        r_c, g_c, b_c = webcolors.hex_to_rgb(key)
+        rd = (r_c - requested_colour[0]) ** 2
+        gd = (g_c - requested_colour[1]) ** 2
+        bd = (b_c - requested_colour[2]) ** 2
+        min_colours[(rd + gd + bd)] = name
+
+    # get name of color with the smallest distance
+    colour_name = min_colours[min(min_colours.keys())]
+
+    return colour_name
+
+
+def get_reloaded_encodings():
+    reloaded_data = pickle.loads(open(encoding_file, "rb").read())
+    return reloaded_data
+
+
 G.setmode(G.BCM)
 G.setup(17, G.IN)
 mode = 1
@@ -16,161 +45,133 @@ encoding_file = "encodings.pickle"
 cascade_file = "haarcascade_frontalface_default.xml"
 engine = pyttsx.init()
 # set tts wpm
-engine.setProperty('rate',180)
+engine.setProperty('rate', 180)
 
 # load encodings
 print("loading encodings")
 data = pickle.loads(open(encoding_file, "rb").read())
 detector = cv2.CascadeClassifier(cascade_file)
-engine.say("loading encodings")
-engine.runAndWait()
+text_to_speech("loaded encodings")
 
 # initialize video stream
 print("starting video stream")
-vs = VideoStream(usePiCamera=True).start()
-#vs = VideoStream(src=0).start()
-engine.say("starting video stream")
-engine.runAndWait()
+video_stream = VideoStream(usePiCamera=True).start()
+# video_stream = VideoStream(src=0).start()
+text_to_speech("started video stream")
 
 try:
-	while True:
+    while True:
 
-		# poll for button press with debouncing
-		if G.input(17):
+        # poll for button press with de-bouncing
+        if G.input(17):
 
-			time.sleep(0.08)
+            time.sleep(0.08)
 
-			if G.input(17):
-				start_time = time.time()
-				
-				# keep looping till button is released
-				while G.input(17):
-					continue
-				
-				# get time button was held down
-				buttonTime = time.time() - start_time
-				
-				# switch modes if button held time is more than 1 sec 
-				if buttonTime > 1:
+            if G.input(17):
+                start_time = time.time()
 
-					if mode == 1:
-						mode = 2
-						print("Colour Recognition Mode")
-						engine.say("Colour Recognition Mode")
-						engine.runAndWait()
+                # keep looping till button is released
+                while G.input(17):
+                    continue
 
-					elif mode == 2:
-						mode = 1
-						print("Face Recognition Mode")
-						engine.say("Face Recognition Mode")
-						engine.runAndWait()
-				
-				# else run the current mode
-				else:
-					# get frame from video stream
-					frame = vs.read()
-					
-					# resize image for processing
-					frame = imutils.resize(frame, width=500)
+                # get time button was held down
+                button_time = time.time() - start_time
 
-					if mode == 1:
+                # switch modes if button held time is more than 1 sec
+                if button_time > 1:
 
-						print("Picture Taken")
-						
-						# BGR to gray for face detection
-						gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-						
-						# BGR to RBG for face recognition
-						rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    if mode == 1:
+                        mode = 2
+                        print("Colour Recognition Mode")
+                        text_to_speech("Colour Recognition Mode")
 
-						# detect faces in the grayscale frame
-						rects = detector.detectMultiScale\
-							(gray, scaleFactor=1.1, minNeighbors=5,
-							 minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+                    elif mode == 2:
+                        mode = 1
+                        print("Face Recognition Mode")
+                        text_to_speech("Face Recognition Mode")
 
-						# reorder and get second rectangle vertex
-						boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
+                # else run the current mode
+                else:
 
-						# get encodings from detected faces
-						encodings = face_recognition.face_encodings(rgb, boxes)
-						names = []
+                    # get frame from video stream
+                    captured_frame = video_stream.read()
 
-						# loop over encodings of detected faces
-						for encoding in encodings:
+                    # resize image for processing
+                    captured_frame = imutils.resize(captured_frame, width=500)
 
-							# attempt to match encoding of detected face to known encodings
-							matches = face_recognition.compare_faces \
-								(data["encodings"], encoding, tolerance=0.4)
-							name = "Unknown"
+                    if mode == 1:
 
-							# check for matches
-							if True in matches:
+                        print("Picture Taken")
 
-								# get indexes of matches
-								matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+                        # BGR to gray for face detection
+                        gray_frame = cv2.cvtColor(captured_frame, cv2.COLOR_BGR2GRAY)
 
-								counts = {}
+                        # BGR to RBG for face recognition
+                        rgb_frame = cv2.cvtColor(captured_frame, cv2.COLOR_BGR2RGB)
 
-								# loop over the matches and group postives by names
-								for i in matchedIdxs:
-									name = data["names"][i]
-									counts[name] = counts.get(name, 0) + 1
+                        # detect faces in the grayscale frame
+                        rects = detector.detectMultiScale \
+                            (gray_frame, scaleFactor=1.1, minNeighbors=5,
+                             minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
 
-								# get name with largest amount of votes
-								name = max(counts, key=counts.get)
+                        # reorder and get second rectangle vertex
+                        boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
 
-							# say out name
-							print(name)
-							names.append(name)
-							engine.say(name.replace("_", " "))
-							engine.runAndWait()
-							
-						# for ((top, right, bottom, left), name) in zip(boxes, names):
-						# 	draw the predicted face name on the image
-						# 	cv2.rectangle(frame, (left, top), (right, bottom),
-						# 		(0, 255, 0), 2)
-						# 	y = top - 15 if top - 15 > 15 else top + 15
-						# 	cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
-						# 		0.75, (0, 255, 0), 2)
-						#
-						# display the image to our screen
-						# cv2.imshow("Frame", frame)
-						# key = cv2.waitKey()
+                        # get encodings from detected faces
+                        encodings = face_recognition.face_encodings(rgb_frame, boxes)
 
-					elif mode == 2:
+                        # initialise list for names of recognised faces
+                        names = []
 
-						image_height = frame.shape[0]  # get image height
-						image_width = frame.shape[1]  # get image width
+                        # loop over encodings of detected faces
+                        for encoding in encodings:
 
-						# get coords of middle pixel
-						ymid = int(image_height / 2)
-						xmid = int(image_width / 2)
-						
-						# get RGB vlaues of pixel
-						requested_colour = frame[ymid, xmid, [2,1,0]]
-						print(requested_colour)
+                            # attempt to match encoding of detected face to known encodings
+                            matched_encodings = face_recognition.compare_faces \
+                                (data["encodings"], encoding, tolerance=0.4)
+                            name = "Unknown"
 
-						min_colours = {}
+                            # check for matches
+                            if True in matched_encodings:
 
-						# get euclidean distance between pixel RGB values
-						# and values in the webcolor's RGB space
-						for key, name in webcolors.css3_hex_to_names.items():
-							r_c, g_c, b_c = webcolors.hex_to_rgb(key)
-							rd = (r_c - requested_colour[0]) ** 2
-							gd = (g_c - requested_colour[1]) ** 2
-							bd = (b_c - requested_colour[2]) ** 2
-							min_colours[(rd + gd + bd)] = name
-						
-						# get name of color with the smallest distance
-						colour_name = min_colours[min(min_colours.keys())]
-						
-						# say color name
-						print(colour_name)
-						engine.say(colour_name)
-						engine.runAndWait()
+                                # get indexes of matches
+                                matched_indexes = [i for (i, b) in enumerate(matched_encodings) if b]
+
+                                counts = {}
+
+                                # loop over the matches and group postives by names
+                                for i in matched_indexes:
+                                    name = data["names"][i]
+                                    counts[name] = counts.get(name, 0) + 1
+
+                                # get name with largest amount of votes
+                                name = max(counts, key=counts.get)
+
+                            # say out name
+                            print(name)
+                            names.append(name)
+                            text_to_speech(name.replace("_", " "))
+
+                    elif mode == 2:
+
+                        image_height = captured_frame.shape[0]  # get image height
+                        image_width = captured_frame.shape[1]  # get image width
+
+                        # get coords of middle pixel
+                        y_mid = int(image_height / 2)
+                        x_mid = int(image_width / 2)
+
+                        # get RGB vlaues of pixel
+                        requested_colour = captured_frame[y_mid, x_mid, [2, 1, 0]]
+                        print(requested_colour)
+
+                        closest_colour_name = get_closest_colour(requested_colour)
+
+                        # say color name
+                        print(closest_colour_name)
+                        text_to_speech(closest_colour_name)
 
 except KeyboardInterrupt:
-	cv2.destroyAllWindows()
-	vs.stop()
-	exit()
-
+    cv2.destroyAllWindows()
+    video_stream.stop()
+    exit()
