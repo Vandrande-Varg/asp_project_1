@@ -39,7 +39,7 @@ def get_reloaded_encodings():
 
 
 G.setmode(G.BCM)
-G.setup(17, G.IN)
+G.setup(18, G.IN, pull_up_down = G.PUD_UP)
 mode = 1
 encoding_file = "encodings.pickle"
 cascade_file = "haarcascade_frontalface_default.xml"
@@ -63,15 +63,15 @@ try:
     while True:
 
         # poll for button press with de-bouncing
-        if G.input(17):
+        if G.input(18) == False:
 
             time.sleep(0.08)
 
-            if G.input(17):
+            if G.input(18) == False:
                 start_time = time.time()
 
                 # keep looping till button is released
-                while G.input(17):
+                while G.input(18) == False:
                     continue
 
                 # get time button was held down
@@ -93,6 +93,7 @@ try:
                 # reread encodings file if button held time is more than 3 sec
                 elif button_time > 3:
                     data = get_reloaded_encodings()
+                    print("Data Reloaded")
 
                 # else run the current mode
                 else:
