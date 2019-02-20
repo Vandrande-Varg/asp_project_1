@@ -1,12 +1,17 @@
-import RPi.GPIO as G
-from imutils.video import VideoStream
-import face_recognition
-import imutils
+"""
+import packages
+"""
 import pickle
 import time
+
 import cv2
+import face_recognition
+import imutils
 import pyttsx3 as pyttsx
 import webcolors
+from imutils.video import VideoStream
+
+import RPi.GPIO as G
 
 
 def text_to_speech(message):
@@ -39,13 +44,13 @@ def get_reloaded_encodings():
 
 
 G.setmode(G.BCM)
-G.setup(18, G.IN, pull_up_down = G.PUD_UP)
+G.setup(18, G.IN, pull_up_down=G.PUD_UP)
 mode = 1
 encoding_file = "encodings.pickle"
 cascade_file = "haarcascade_frontalface_default.xml"
 engine = pyttsx.init()
 # set tts wpm
-engine.setProperty('rate', 180)
+engine.setProperty("rate", 180)
 
 # load encodings
 print("loading encodings")
@@ -115,9 +120,13 @@ try:
                         rgb_frame = cv2.cvtColor(captured_frame, cv2.COLOR_BGR2RGB)
 
                         # detect faces in the grayscale frame
-                        rects = detector.detectMultiScale \
-                            (gray_frame, scaleFactor=1.1, minNeighbors=5,
-                             minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
+                        rects = detector.detectMultiScale(
+                            gray_frame,
+                            scaleFactor=1.1,
+                            minNeighbors=5,
+                            minSize=(30, 30),
+                            flags=cv2.CASCADE_SCALE_IMAGE,
+                        )
 
                         # reorder and get second rectangle vertex
                         boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
@@ -132,15 +141,18 @@ try:
                         for encoding in encodings:
 
                             # attempt to match encoding of detected face to known encodings
-                            matched_encodings = face_recognition.compare_faces \
-                                (data["encodings"], encoding, tolerance=0.4)
+                            matched_encodings = face_recognition.compare_faces(
+                                data["encodings"], encoding, tolerance=0.4
+                            )
                             name = "Unknown"
 
                             # check for matches
                             if True in matched_encodings:
 
                                 # get indexes of matches
-                                matched_indexes = [i for (i, b) in enumerate(matched_encodings) if b]
+                                matched_indexes = [
+                                    i for (i, b) in enumerate(matched_encodings) if b
+                                ]
 
                                 counts = {}
 

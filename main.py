@@ -6,10 +6,10 @@ import pickle
 import time
 import cv2
 import pyttsx3 as pyttsx
-import RPi.GPIO as G
+import RPi.GPIO as GPIO
 
-G.setmode(G.BCM)
-G.setup(4,G.IN)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(4,GPIO.IN)
 
 encoding_file = "encodings_2.pickle"
 cascade_file = "haarcascade_frontalface_default.xml"
@@ -44,7 +44,7 @@ try:
 			#break
 		#elif key == ord("t"):
 		#elif key == ("t") or G.input(4) == True:
-		if (G.input(4)==False):
+		if (GPIO.input(4)==False):
 
 			print("Picture Taken")
 
@@ -93,9 +93,9 @@ try:
 	# do a bit of cleanup
 	cv2.destroyAllWindows()
 	vs.stop()
-	G.cleanup()
+	GPIO.cleanup()
 
 except KeyboardInterrupt:
 	cv2.destroyAllWindows()
 	vs.stop()
-	G.cleanup()
+	GPIO.cleanup()

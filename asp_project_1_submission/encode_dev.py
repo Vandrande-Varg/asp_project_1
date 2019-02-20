@@ -1,9 +1,13 @@
+"""
+import packages
+"""
 import concurrent.futures
-from imutils import paths
-import face_recognition
-import pickle
-import cv2
 import os
+import pickle
+
+import cv2
+import face_recognition
+from imutils import paths
 
 
 def get_face_encodings(image_path):
@@ -33,8 +37,10 @@ def encode():
     known_names = []
 
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        for image_path, encodings in zip(image_paths, executor.map(get_face_encodings, image_paths)):
-            print("processed image {}/{}".format((image_paths.index(image_path) + 1), len(image_paths)))
+        zip_list = zip(image_paths, executor.map(get_face_encodings, image_paths))
+        for image_path, encodings in zip_list:
+            path_index = image_paths.index(image_path) + 1
+            print("processed image {}/{}".format(path_index, len(image_paths)))
 
             # get name from image folder
             name = image_path.split(os.path.sep)[-2]
@@ -47,9 +53,9 @@ def encode():
     # write the facial encodings + names to pickle file
     print("serializing encodings")
     data = {"encodings": known_encodings, "names": known_names}
-    f = open(encoding_file, "wb")
-    f.write(pickle.dumps(data))
-    f.close()
+    file = open(encoding_file, "wb")
+    file.write(pickle.dumps(data))
+    file.close()
     print("encoding finished")
 
 

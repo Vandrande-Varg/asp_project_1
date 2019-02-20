@@ -1,5 +1,5 @@
 # import the necessary packages
-import RPi.GPIO as G
+import RPi.GPIO as GPIO
 from imutils.video import VideoStream
 import face_recognition
 import imutils
@@ -13,8 +13,8 @@ import pytesseract
 import webcolors
 
 
-G.setmode(G.BCM)
-G.setup(17, G.IN)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.IN)
 mode = 1
 encoding_file = "encodings_2.pickle"
 cascade_file = "haarcascade_frontalface_default.xml"
@@ -116,14 +116,14 @@ try:
 		frame = vs.read()
 		#cv2.imshow("Frame", frame)
 
-		if G.input(17):
+		if GPIO.input(17):
 
 			time.sleep(0.08)
 
-			if G.input(17):
+			if GPIO.input(17):
 				start_time = time.time()
 
-				while G.input(17):
+				while GPIO.input(17):
 					continue
 
 				buttonTime = time.time() - start_time
